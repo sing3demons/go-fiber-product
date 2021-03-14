@@ -18,6 +18,7 @@ func Serve() *fiber.App {
 	{
 		productsGroup.Get("", productController.FindAll)
 		productsGroup.Post("", productController.Create)
+		productsGroup.Put("/:id", productController.Update)
 		productsGroup.Get("/:id", productController.FindOne)
 	}
 
