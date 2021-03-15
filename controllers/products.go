@@ -3,7 +3,6 @@ package controllers
 import (
 	"app/config"
 	"app/models"
-	"fmt"
 	"mime/multipart"
 	"os"
 	"strconv"
@@ -36,6 +35,11 @@ type productRespons struct {
 	Image string `json:"image"`
 }
 
+type productPaging struct {
+	Items  []productRespons `json:"items"`
+	Paging *pagingResult    `json:"paging"`
+}
+
 type Product struct {
 	DB *gorm.DB
 }
@@ -43,8 +47,13 @@ type Product struct {
 func (p *Product) FindAll(ctx *fiber.Ctx) error {
 	var products []models.Product
 
-	p.DB.Order("id desc").Find(&products)
-	return ctx.Status(fiber.StatusOK).JSON(config.H{"products": products})
+	paging := pagingResource(ctx, p.DB.Order("id desc"), &products)
+
+	// p.DB.Order("id desc").Find(&products)
+
+	serializedProducts := []productRespons{}
+	copier.Copy(&serializedProducts, &products)
+	return ctx.Status(fiber.StatusOK).JSON(config.H{"products": productPaging{Items: serializedProducts, Paging: paging}})
 }
 
 func (p *Product) FindOne(ctx *fiber.Ctx) error {
@@ -99,6 +108,18 @@ func (p *Product) Update(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusOK)
 }
 
+//Delete - delete product
+func (p *Product) Delete(ctx *fiber.Ctx) error {
+	product, err := p.findProductByID(ctx)
+	if err != nil {
+		return ctx.Status(fiber.StatusNotFound).JSON(config.H{"error": err.Error()})
+	}
+
+	p.DB.Unscoped().Delete(&product)
+	p.removeImageProduct(ctx, product)
+	return ctx.SendStatus(fiber.StatusNoContent)
+}
+
 func (p *Product) findProductByID(ctx *fiber.Ctx) (*models.Product, error) {
 	var product models.Product
 	id := ctx.Params("id")
@@ -117,15 +138,7 @@ func (p *Product) setProductImage(ctx *fiber.Ctx, product *models.Product) error
 		return err
 	}
 
-	if product.Image != "" {
-		product.Image = strings.Replace(product.Image, os.Getenv("HOST"), "", 1)
-		fmt.Println(product.Image)
-		pwd, _ := os.Getwd()
-		fmt.Println(pwd)
-		os.Remove(pwd + product.Image)
-
-	}
-
+	p.removeImageProduct(ctx, product)
 	path := "uploads/products/" + strconv.Itoa(int(product.ID))
 	os.MkdirAll(path, 0755)
 
@@ -142,4 +155,13 @@ func (p *Product) setProductImage(ctx *fiber.Ctx, product *models.Product) error
 
 	return nil
 
+}
+
+func (p *Product) removeImageProduct(ctx *fiber.Ctx, product *models.Product) error {
+	if product.Image != "" {
+		product.Image = strings.Replace(product.Image, os.Getenv("HOST"), "", 1)
+		pwd, _ := os.Getwd()
+		os.Remove(pwd + product.Image)
+	}
+	return nil
 }

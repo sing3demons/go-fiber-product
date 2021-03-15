@@ -17,9 +17,10 @@ func Serve() *fiber.App {
 	productsGroup := v1.Group("/products")
 	{
 		productsGroup.Get("", productController.FindAll)
+		productsGroup.Get("/:id", productController.FindOne)
 		productsGroup.Post("", productController.Create)
 		productsGroup.Put("/:id", productController.Update)
-		productsGroup.Get("/:id", productController.FindOne)
+		productsGroup.Delete("/:id", productController.Delete)
 	}
 
 	return app
