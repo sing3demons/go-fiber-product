@@ -47,7 +47,12 @@ type Product struct {
 func (p *Product) FindAll(ctx *fiber.Ctx) error {
 	var products []models.Product
 
-	paging := pagingResource(ctx, p.DB.Order("id desc"), &products)
+	pagination := pagination{
+		ctx:     ctx,
+		query:   p.DB,
+		records: &products,
+	}
+	paging := pagination.pagingResource()
 
 	// p.DB.Order("id desc").Find(&products)
 

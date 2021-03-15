@@ -17,16 +17,23 @@ type pagingResult struct {
 	TotalPage int `json:"totalPage"`
 }
 
-func pagingResource(ctx *fiber.Ctx, query *gorm.DB, records interface{}) *pagingResult {
-	page, _ := strconv.Atoi(ctx.Query("page", "1"))
-	limit, _ := strconv.Atoi(ctx.Query("limit", "12"))
+type pagination struct{
+	ctx *fiber.Ctx
+	query *gorm.DB
+	records interface{}
+}
 
-	var count int64
-	query.Model(records).Count(&count)
+func (p *pagination) pagingResource() *pagingResult {
+	page, _ := strconv.Atoi(p.ctx.Query("page", "1"))
+	limit, _ := strconv.Atoi(p.ctx.Query("limit", "12"))
+
+	ch := make(chan int)
+	go p.countRecords(ch)
 
 	offset := (page - 1) * limit
-	query.Limit(limit).Offset(offset).Find(records)
+	p.query.Limit(limit).Offset(offset).Find(p.records)
 
+	count := <- ch
 	totalPage := int(math.Ceil(float64(count) / float64(limit)))
 
 	var nextPage int
@@ -44,4 +51,10 @@ func pagingResource(ctx *fiber.Ctx, query *gorm.DB, records interface{}) *paging
 		Count:     int(count),
 		TotalPage: totalPage,
 	}
+}
+
+func (p *pagination) countRecords(ch chan int){
+	var count int64
+	p.query.Model(p.records).Count(&count)
+	ch <- int(count)
 }
