@@ -1,15 +1,14 @@
 package routes
 
 import (
-	"app/config"
-	"app/controllers"
-
 	"github.com/gofiber/fiber/v2"
+	"github.com/sing3demons/product-app/config"
+	"github.com/sing3demons/product-app/controllers"
 )
 
-func Serve() *fiber.App {
+func Serve(app *fiber.App) {
 	db := config.GetDB()
-	app := fiber.New()
+
 	app.Get("", homepage)
 	v1 := app.Group("api/v1")
 
@@ -23,7 +22,17 @@ func Serve() *fiber.App {
 		productsGroup.Delete("/:id", productController.Delete)
 	}
 
-	return app
+	// categoryController := controllers.Category{DB: db}
+	// categoryGroup := v1.Group("/categories")
+	// categoryGroup.GET("", categoryController.FindAll)
+	// categoryGroup.GET("/:id", categoryController.FindOne)
+	// categoryGroup.Use(authenticate, authorize)
+	// {
+	// 	categoryGroup.POST("", categoryController.Create)
+	// 	categoryGroup.PATCH("/:id", categoryController.Update)
+	// 	categoryGroup.DELETE("/:id", categoryController.Delete)
+	// }
+
 }
 
 // http://127.0.0.1:8080

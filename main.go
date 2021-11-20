@@ -1,12 +1,14 @@
 package main
 
 import (
-	"app/config"
-	"app/routes"
 	"log"
 	"os"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
+	"github.com/sing3demons/product-app/config"
+	"github.com/sing3demons/product-app/routes"
+	"github.com/sing3demons/product-app/seeds"
 )
 
 func main() {
@@ -16,8 +18,10 @@ func main() {
 	}
 
 	config.InitDB()
+	seeds.Load()
 
-	app := routes.Serve()
+	app := fiber.New()
+	routes.Serve(app)
 	app.Static("/uploads", "./uploads")
 
 	//สร้าง folder

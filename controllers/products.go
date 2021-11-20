@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"app/config"
-	"app/models"
 	"mime/multipart"
 	"os"
 	"strconv"
@@ -10,6 +8,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jinzhu/copier"
+	"github.com/sing3demons/product-app/models"
 	"gorm.io/gorm"
 )
 
@@ -44,6 +43,7 @@ type Product struct {
 	DB *gorm.DB
 }
 
+//FindAll - All Products
 func (p *Product) FindAll(ctx *fiber.Ctx) error {
 	var products []models.Product
 
@@ -54,28 +54,28 @@ func (p *Product) FindAll(ctx *fiber.Ctx) error {
 	}
 	paging := pagination.pagingResource()
 
-	// p.DB.Order("id desc").Find(&products)
-
 	serializedProducts := []productRespons{}
 	copier.Copy(&serializedProducts, &products)
-	return ctx.Status(fiber.StatusOK).JSON(config.H{"products": productPaging{Items: serializedProducts, Paging: paging}})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"products": productPaging{Items: serializedProducts, Paging: paging}})
 }
 
+//FindOne - first product
 func (p *Product) FindOne(ctx *fiber.Ctx) error {
 	product, err := p.findProductByID(ctx)
 	if err != nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(config.H{"error": err.Error()})
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	serializedProduct := productRespons{}
 	copier.Copy(&serializedProduct, &product)
-	return ctx.Status(fiber.StatusOK).JSON(config.H{"product": serializedProduct})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"product": serializedProduct})
 }
 
+//Create - insert product
 func (p *Product) Create(ctx *fiber.Ctx) error {
 	var form productForm
 	if err := ctx.BodyParser(&form); err != nil {
-		ctx.Status(fiber.StatusUnprocessableEntity).JSON(config.H{"error": err.Error()})
+		ctx.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"error": err.Error()})
 		return err
 	}
 
@@ -88,24 +88,25 @@ func (p *Product) Create(ctx *fiber.Ctx) error {
 	var serializedProduct productRespons
 	copier.Copy(&serializedProduct, &product)
 
-	return ctx.Status(fiber.StatusOK).JSON(config.H{"product": serializedProduct})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"product": serializedProduct})
 }
 
+//Update - update product
 func (p *Product) Update(ctx *fiber.Ctx) error {
 	var form updateProductForm
 	if err := ctx.BodyParser(&form); err != nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(config.H{"error": err.Error()})
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	product, err := p.findProductByID(ctx)
 	if err != nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(config.H{"error": err.Error()})
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	copier.Copy(&product, &form)
 
 	if err := p.DB.Save(&product).Error; err != nil {
-		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(config.H{"error": err.Error()})
+		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	p.setProductImage(ctx, product)
@@ -117,7 +118,7 @@ func (p *Product) Update(ctx *fiber.Ctx) error {
 func (p *Product) Delete(ctx *fiber.Ctx) error {
 	product, err := p.findProductByID(ctx)
 	if err != nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(config.H{"error": err.Error()})
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	p.DB.Unscoped().Delete(&product)
@@ -134,7 +135,6 @@ func (p *Product) findProductByID(ctx *fiber.Ctx) (*models.Product, error) {
 	}
 
 	return &product, nil
-
 }
 
 func (p *Product) setProductImage(ctx *fiber.Ctx, product *models.Product) error {
@@ -159,7 +159,6 @@ func (p *Product) setProductImage(ctx *fiber.Ctx, product *models.Product) error
 	}
 
 	return nil
-
 }
 
 func (p *Product) removeImageProduct(ctx *fiber.Ctx, product *models.Product) error {
