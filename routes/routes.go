@@ -22,16 +22,17 @@ func Serve(app *fiber.App) {
 		productsGroup.Delete("/:id", productController.Delete)
 	}
 
-	// categoryController := controllers.Category{DB: db}
-	// categoryGroup := v1.Group("/categories")
-	// categoryGroup.GET("", categoryController.FindAll)
-	// categoryGroup.GET("/:id", categoryController.FindOne)
+	categoryController := controllers.Category{DB: db}
+	categoryGroup := v1.Group("/categories")
+	categoryGroup.Get("", categoryController.FindAll)
+	categoryGroup.Get("/products", categoryController.FindCategoryProduct)
+	categoryGroup.Get("/:id", categoryController.FindOne)
 	// categoryGroup.Use(authenticate, authorize)
-	// {
-	// 	categoryGroup.POST("", categoryController.Create)
-	// 	categoryGroup.PATCH("/:id", categoryController.Update)
-	// 	categoryGroup.DELETE("/:id", categoryController.Delete)
-	// }
+	{
+		categoryGroup.Post("", categoryController.Create)
+		categoryGroup.Patch("/:id", categoryController.Update)
+		categoryGroup.Delete("/:id", categoryController.Delete)
+	}
 
 }
 

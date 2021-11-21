@@ -25,7 +25,7 @@ type pagination struct{
 
 func (p *pagination) pagingResource() *pagingResult {
 	page, _ := strconv.Atoi(p.ctx.Query("page", "1"))
-	limit, _ := strconv.Atoi(p.ctx.Query("limit", "12"))
+	limit, _ := strconv.Atoi(p.ctx.Query("limit", "24"))
 
 	ch := make(chan int)
 	go p.countRecords(ch)
