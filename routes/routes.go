@@ -2,17 +2,26 @@ package routes
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/sing3demons/product-app/config"
+	"github.com/sing3demons/product-app/cache"
 	"github.com/sing3demons/product-app/controllers"
+	"github.com/sing3demons/product-app/database"
 )
 
+func NewCacherConfig() *cache.CacherConfig {
+	return &cache.CacherConfig{}
+}
+
 func Serve(app *fiber.App) {
-	db := config.GetDB()
+	db := database.GetDB()
+	cacher := cache.NewCacher(NewCacherConfig())
 
 	app.Get("", homepage)
 	v1 := app.Group("api/v1")
 
-	productController := controllers.Product{DB: db}
+	productController := controllers.Product{
+		DB:    db,
+		Redis: cacher,
+	}
 	productsGroup := v1.Group("/products")
 	{
 		productsGroup.Get("", productController.FindAll)

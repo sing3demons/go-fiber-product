@@ -6,19 +6,20 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
-	"github.com/sing3demons/product-app/config"
+	"github.com/sing3demons/product-app/database"
 	"github.com/sing3demons/product-app/routes"
-	"github.com/sing3demons/product-app/seeds"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	if os.Getenv("APP_ENV") != "production" {
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatal("Error loading .env file")
+		}
 	}
 
-	config.InitDB()
-	seeds.Load()
+	database.InitDB()
+	// seeds.Load()
 
 	app := fiber.New()
 	routes.Serve(app)

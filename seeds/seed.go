@@ -6,12 +6,12 @@ import (
 	"strconv"
 
 	"github.com/bxcodec/faker/v3"
-	"github.com/sing3demons/product-app/config"
+	"github.com/sing3demons/product-app/database"
 	"github.com/sing3demons/product-app/models"
 )
 
 func Load() {
-	db := config.GetDB()
+	db := database.GetDB()
 	db.AutoMigrate(&models.Category{}, &models.Product{})
 
 	var categories []models.Category

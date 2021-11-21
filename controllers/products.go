@@ -1,13 +1,17 @@
 package controllers
 
 import (
+	"encoding/json"
+	"fmt"
 	"mime/multipart"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/jinzhu/copier"
+	"github.com/sing3demons/product-app/cache"
 	"github.com/sing3demons/product-app/models"
 	"gorm.io/gorm"
 )
@@ -27,11 +31,16 @@ type updateProductForm struct {
 }
 
 type productRespons struct {
-	ID    uint   `json:"id"`
-	Name  string `json:"name"`
-	Desc  string `json:"desc"`
-	Price int    `json:"price"`
-	Image string `json:"image"`
+	ID         uint   `json:"id"`
+	Name       string `json:"name"`
+	Desc       string `json:"desc"`
+	Price      int    `json:"price"`
+	Image      string `json:"image"`
+	CategoryID uint   `json:"categoryId"`
+	Category   struct {
+		ID   uint   `json:"id"`
+		Name string `json:"name"`
+	} `json:"category"`
 }
 
 type productPaging struct {
@@ -40,12 +49,52 @@ type productPaging struct {
 }
 
 type Product struct {
-	DB *gorm.DB
+	DB    *gorm.DB
+	Redis *cache.Cacher
 }
 
 //FindAll - All Products
 func (p *Product) FindAll(ctx *fiber.Ctx) error {
+	cacheProduct := "items::all"
+	cachePage := "items::page"
+
+	cacheItems, err := p.Redis.Get(cacheProduct)
+	cacheItemPage, _ := p.Redis.Get(cachePage)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	if len(cacheItems) > 0 && len(cacheItemPage) > 0 {
+		fmt.Println("Get...")
+
+		var items []productRespons
+		var page *pagingResult
+		if err := json.Unmarshal([]byte(cacheItems), &items); err != nil {
+			fmt.Println(err.Error())
+			//json: Unmarshal(non-pointer main.Request)
+		}
+		if err = json.Unmarshal([]byte(cacheItemPage), &page); err != nil {
+			fmt.Println(err.Error())
+			//json: Unmarshal(non-pointer main.Request)
+		}
+
+		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+			"products": productPaging{
+				Items:  items,
+				Paging: page,
+			},
+		})
+
+	}
+
 	var products []models.Product
+
+	query := p.DB.Preload("Category").Order("id desc")
+
+	if category := ctx.Query("category"); category != "" {
+		c, _ := strconv.Atoi(category)
+		query = query.Where("category_id = ?", c)
+	}
 
 	pagination := pagination{
 		ctx:     ctx,
@@ -54,9 +103,21 @@ func (p *Product) FindAll(ctx *fiber.Ctx) error {
 	}
 	paging := pagination.pagingResource()
 
-	serializedProducts := []productRespons{}
-	copier.Copy(&serializedProducts, &products)
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"products": productPaging{Items: serializedProducts, Paging: paging}})
+	serializedProduct := []productRespons{}
+	copier.Copy(&serializedProduct, &products)
+
+	timeToExpire := 10 * time.Second // 60 * 5 * time.Second // 5m
+	p.Redis.Set(cacheProduct, serializedProduct, timeToExpire)
+	p.Redis.Set(cachePage, paging, timeToExpire)
+
+	resp := fiber.Map{
+		"items": serializedProduct,
+		"page":  paging,
+	}
+	fmt.Println("Set...")
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"products": resp,
+	})
 }
 
 //FindOne - first product
