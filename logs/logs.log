@@ -1,8 +1,0 @@
-[22:31:19], 200 - 274.915µs, ip:pid(172.19.0.1:1), GET, /
-[22:31:19], 404 - 107.007µs, ip:pid(172.19.0.1:1), GET, /favicon.ico
-[22:31:43], 200 - 39.113902ms, ip:pid(172.19.0.1:1), GET, /api/v1/products
-[22:37:29], 200 - 25.458374ms, ip:pid(172.20.0.1:1), GET, /api/v1/products
-[22:37:38], 200 - 1.523197ms, ip:pid(172.20.0.1:1), GET, /api/v1/products
-[22:39:28], 200 - 951.441µs, ip:pid(172.20.0.1:1), GET, /api/v1/categories
-[22:43:35], 201 - 12.667896ms, ip:pid(172.20.0.1:1), POST, /api/v1/categories
-[22:43:41], 200 - 834.465µs, ip:pid(172.20.0.1:1), GET, /api/v1/categories

@@ -41,11 +41,6 @@ func main() {
 
 	database.InitDB()
 	seeds.Load()
-	file, err := os.OpenFile("./logs/logs.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("error opening file: %v", err)
-	}
-	defer file.Close()
 
 	app := fiber.New()
 	app.Use(recover.New())
@@ -60,14 +55,23 @@ func main() {
 		})
 	})
 
-	app.Use(logger.New(logger.Config{
-		Output:       file,
-		Format:       "[${time}], ${status} - ${latency}, ip:pid(${ip}:${pid}), ${method}, ${path}\n",
-		Next:         nil,
-		TimeFormat:   "15:04:05",
-		TimeZone:     "Local",
-		TimeInterval: 500 * time.Millisecond,
-	}))
+	if os.Getenv("APP_ENV") == "production" {
+		file, err := os.OpenFile("./logs/logs.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalf("error opening file: %v", err)
+		}
+		defer file.Close()
+
+		app.Use(logger.New(logger.Config{
+			Output:       file,
+			Format:       "[${time}], ${status} - ${latency}, ip:(${ip}:${pid}), ${method}, ${path}\n",
+			Next:         nil,
+			TimeFormat:   "15:04:05",
+			TimeZone:     "Local",
+			TimeInterval: 500 * time.Millisecond,
+		}))
+	}
+
 	app.Use(logger.New(logger.ConfigDefault))
 
 	routes.Serve(app)
