@@ -65,17 +65,15 @@ func (p *Product) FindAll(ctx *fiber.Ctx) error {
 	}
 
 	if len(cacheItems) > 0 && len(cacheItemPage) > 0 {
-		fmt.Println("Get...")
+		fmt.Println("redis ")
 
 		var items []productRespons
 		var page *pagingResult
 		if err := json.Unmarshal([]byte(cacheItems), &items); err != nil {
 			fmt.Println(err.Error())
-			//json: Unmarshal(non-pointer main.Request)
 		}
 		if err = json.Unmarshal([]byte(cacheItemPage), &page); err != nil {
 			fmt.Println(err.Error())
-			//json: Unmarshal(non-pointer main.Request)
 		}
 
 		return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -89,19 +87,12 @@ func (p *Product) FindAll(ctx *fiber.Ctx) error {
 
 	var products []models.Product
 
-	query := p.DB.Preload("Category").Order("id desc")
-
-	if category := ctx.Query("category"); category != "" {
-		c, _ := strconv.Atoi(category)
-		query = query.Where("category_id = ?", c)
-	}
-
 	pagination := pagination{
 		ctx:     ctx,
 		query:   p.DB,
 		records: &products,
 	}
-	paging := pagination.pagingResource()
+	paging := pagination.paginate()
 
 	serializedProduct := []productRespons{}
 	copier.Copy(&serializedProduct, &products)
@@ -114,7 +105,6 @@ func (p *Product) FindAll(ctx *fiber.Ctx) error {
 		"items": serializedProduct,
 		"page":  paging,
 	}
-	fmt.Println("Set...")
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
 		"products": resp,
 	})

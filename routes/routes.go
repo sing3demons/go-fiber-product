@@ -12,6 +12,7 @@ func NewCacherConfig() *cache.CacherConfig {
 }
 
 func Serve(app *fiber.App) {
+
 	db := database.GetDB()
 	cacher := cache.NewCacher(NewCacherConfig())
 
@@ -47,11 +48,7 @@ func Serve(app *fiber.App) {
 
 // http://127.0.0.1:8080
 func homepage(ctx *fiber.Ctx) error {
-	name := ctx.Query("name")
-
-	if name == "" {
-		name = ", world"
-	}
+	name := ctx.Query("name", ", world")
 
 	return ctx.SendString("Hello " + name)
 }

@@ -9,31 +9,38 @@ import (
 )
 
 type pagingResult struct {
-	Page      int `json:"page"`
-	Limit     int `json:"limit"`
-	PrevPage  int `json:"prevPage"`
-	NextPage  int `json:"nextPage"`
-	Count     int `json:"count"`
-	TotalPage int `json:"totalPage"`
+	Page      int   `json:"page"`
+	Limit     int   `json:"limit"`
+	PrevPage  int   `json:"prevPage"`
+	NextPage  int   `json:"nextPage"`
+	Count     int64 `json:"count"`
+	TotalPage int   `json:"totalPage"`
 }
 
-type pagination struct{
-	ctx *fiber.Ctx
-	query *gorm.DB
+type pagination struct {
+	ctx     *fiber.Ctx
+	query   *gorm.DB
 	records interface{}
 }
 
-func (p *pagination) pagingResource() *pagingResult {
+func (p *pagination) paginate() *pagingResult {
 	page, _ := strconv.Atoi(p.ctx.Query("page", "1"))
 	limit, _ := strconv.Atoi(p.ctx.Query("limit", "24"))
 
-	ch := make(chan int)
+	ch := make(chan int64)
 	go p.countRecords(ch)
 
 	offset := (page - 1) * limit
-	p.query.Limit(limit).Offset(offset).Find(p.records)
 
-	count := <- ch
+	query := p.query.Preload("Category").Order("id desc")
+	if category := p.ctx.Query("category"); category != "" {
+		c, _ := strconv.Atoi(category)
+		query = query.Where("category_id = ?", c)
+	}
+
+	query.Limit(limit).Offset(offset).Find(p.records)
+
+	count := <-ch
 	totalPage := int(math.Ceil(float64(count) / float64(limit)))
 
 	var nextPage int
@@ -48,13 +55,13 @@ func (p *pagination) pagingResource() *pagingResult {
 		Limit:     limit,
 		PrevPage:  page - 1,
 		NextPage:  nextPage,
-		Count:     int(count),
+		Count:     count,
 		TotalPage: totalPage,
 	}
 }
 
-func (p *pagination) countRecords(ch chan int){
+func (p *pagination) countRecords(ch chan int64) {
 	var count int64
 	p.query.Model(p.records).Count(&count)
-	ch <- int(count)
+	ch <- count
 }

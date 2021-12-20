@@ -1,27 +1,49 @@
-version: "3.9"
+version: '3.9'
 services:
-  db:
-    container_name: postgres
-    image: postgres
-    environment:
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-    restart: always
-    ports:
-      - 5432:5432
-    volumes:
-      - ./_data/pg-data:/var/lib/postgresql/data
-  redis:
-    container_name: redis 
-    image: redis:alpine
-    environment:
-      - AllOW_EMPTY=yes
-    ports:
+    db:
+      container_name: postgres
+      image: postgres
+      environment:
+        POSTGRES_DB: ${DB_NAME}
+        POSTGRES_USER: ${DB_USER}
+        POSTGRES_PASSWORD: ${DB_PASSWORD}
+      restart: always
+      ports:
+        - ${DB_PORT}:${DB_PORT}
+      volumes:
+        - ./_data/pg_data:/var/lib/postgresql/data
+    redis:
+      container_name: redis
+      image: redis:alpine
+      environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      ports:
       - 6379:6379
-    volumes:
-      - ./_data/redis:/data
-      - ./config/redis.conf:/redis.conf
-    command: redis-server /redis.conf
-
-    
+      volumes:
+       - ./_data/redis:/data
+       - ./config/redis_cfg/redis.conf:/redis.conf
+      command: redis-server /redis.conf
+    webapi:
+      container_name: webapi
+      image: go-fiber-products:0.0.1
+      # build: .
+      ports:
+        - ${PORT}:${PORT}
+      restart: always
+      environment:
+        - PORT=${PORT}
+        - DB_USER=${DB_USER}
+        - DB_NAME=${DB_NAME}
+        - DB_PASSWORD=${DB_PASSWORD}
+        - DB_PORT=${DB_PORT}
+        - DB_HOST=${DB_HOST}
+        - APP_ENV=${APP_ENV}
+        - REDIS_HOST=${REDIS_HOST}
+      volumes:
+        - "./uploads:/uploads"
+        - "./logs:/logs"
+      depends_on:
+        - db
+        - redis
+      links:
+        - "db:db"

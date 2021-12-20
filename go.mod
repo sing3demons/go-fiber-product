@@ -6,7 +6,6 @@ require (
 	github.com/gofiber/fiber/v2 v2.22.0
 	github.com/jinzhu/copier v0.3.2
 	github.com/joho/godotenv v1.4.0
-	gorm.io/driver/sqlite v1.2.4
 	gorm.io/gorm v1.22.3
 )
 
@@ -30,12 +29,11 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.3 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
-	github.com/mattn/go-sqlite3 v1.14.9 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.31.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871 // indirect
-	golang.org/x/sys v0.0.0-20211117180635-dee7805ff2e1 // indirect
+	golang.org/x/sys v0.0.0-20211124211545-fe61309f8881 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	gorm.io/driver/postgres v1.2.2 // indirect
+	gorm.io/driver/postgres v1.2.2
 )

@@ -20,77 +20,7 @@ type ICacher interface {
 	Expires(keys []string, expire time.Duration) error
 	Del(keys ...string) error
 	Exists(key string) (bool, error)
-
 	Close() error
-}
-
-// ICacherConfig is cacher configuration interface
-type ICacherConfig interface {
-	Endpoint() string
-	Password() string
-	DB() int
-	ConnectionSettings() ICacherConnectionSettings
-}
-
-// ICacherConnectionSettings is connection settings for cacher
-type ICacherConnectionSettings interface {
-	PoolSize() int
-	MinIdleConns() int
-	MaxRetries() int
-	MinRetryBackoff() time.Duration
-	MaxRetryBackoff() time.Duration
-	IdleTimeout() time.Duration
-	IdleCheckFrequency() time.Duration
-	PoolTimeout() time.Duration
-	ReadTimeout() time.Duration
-	WriteTimeout() time.Duration
-}
-
-// DefaultCacherConnectionSettings contains default connection settings, this intend to use as embed struct
-type DefaultCacherConnectionSettings struct{}
-
-func NewDefaultCacherConnectionSettings() ICacherConnectionSettings {
-	return &DefaultCacherConnectionSettings{}
-}
-
-func (setting *DefaultCacherConnectionSettings) PoolSize() int {
-	return 50
-}
-
-func (setting *DefaultCacherConnectionSettings) MinIdleConns() int {
-	return 5
-}
-
-func (setting *DefaultCacherConnectionSettings) MaxRetries() int {
-	return 3
-}
-
-func (setting *DefaultCacherConnectionSettings) MinRetryBackoff() time.Duration {
-	return 10 * time.Millisecond
-}
-
-func (setting *DefaultCacherConnectionSettings) MaxRetryBackoff() time.Duration {
-	return 500 * time.Millisecond
-}
-
-func (setting *DefaultCacherConnectionSettings) IdleTimeout() time.Duration {
-	return 30 * time.Minute
-}
-
-func (setting *DefaultCacherConnectionSettings) IdleCheckFrequency() time.Duration {
-	return time.Minute
-}
-
-func (setting *DefaultCacherConnectionSettings) PoolTimeout() time.Duration {
-	return time.Minute
-}
-
-func (setting *DefaultCacherConnectionSettings) ReadTimeout() time.Duration {
-	return time.Minute
-}
-
-func (setting *DefaultCacherConnectionSettings) WriteTimeout() time.Duration {
-	return time.Minute
 }
 
 // Cacher is the struct for cache service
